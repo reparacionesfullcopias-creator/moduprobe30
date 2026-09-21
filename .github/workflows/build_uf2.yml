@@ -1,0 +1,49 @@
+# GitHub Actions — build del .uf2 3.0 con fuentes congeladas (FASE B)
+# Colocar en el repo como: .github/workflows/build_uf2.yml
+# Version de MicroPython FIJADA con FU-B0 (sonda FUB, 21/09): v1.29.0.
+
+name: build-uf2-3.0
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Codigo ModuProbe 3.0
+        uses: actions/checkout@v4
+
+      - name: MicroPython (version = la de tu Pico, ver FU-B0)
+        uses: actions/checkout@v4
+        with:
+          repository: micropython/micropython
+          ref: v1.29.0          # fijado con FU-B0 (MicroPython v1.29.0, 21/09)
+          path: mp
+
+      - name: Preparar placa PICO_MP30 con fuentes congeladas
+        run: |
+          cp -r mp/ports/rp2/boards/PICO mp/ports/rp2/boards/PICO_MP30
+          cp device/fontbase3.py device/fontnokia3.py \
+             device/fontarcade3.py device/writer3.py \
+             mp/ports/rp2/boards/PICO_MP30/
+          cp build/manifest.py mp/ports/rp2/boards/PICO_MP30/manifest.py
+          # Anclar el manifest en la placa (linea anadida al final de
+          # PICO_MP30/mpconfigboard.cmake):
+          #   MICROPY_FROZEN_MANIFEST ?= boards/PICO_MP30/manifest.py
+          printf '\nMICROPY_FROZEN_MANIFEST ?= boards/PICO_MP30/manifest.py\n' \
+            >> mp/ports/rp2/boards/PICO_MP30/mpconfigboard.cmake
+
+      - name: Compilar
+        run: |
+          cd mp
+          make -C mpy-cross -j2
+          make -C ports/rp2 BOARD=PICO_MP30 -j2
+
+      - name: Publicar artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-3.0-iter1
+          path: mp/ports/rp2/build-PICO_MP30/firmware.uf2
