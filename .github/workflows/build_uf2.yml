@@ -1,6 +1,8 @@
 # GitHub Actions — build del .uf2 3.0 con fuentes congeladas (FASE B)
 # Colocar en el repo como: .github/workflows/build_uf2.yml
 # Version de MicroPython FIJADA con FU-B0 (sonda FUB, 21/09): v1.29.0.
+# 21/09: anadido paso de herramientas ARM (el runner de GitHub no trae
+# gcc-arm-none-eabi preinstalado, verificado en el readme de runner-images).
 
 name: build-uf2-3.0
 
@@ -35,6 +37,9 @@ jobs:
           #   MICROPY_FROZEN_MANIFEST ?= boards/PICO_MP30/manifest.py
           printf '\nMICROPY_FROZEN_MANIFEST ?= boards/PICO_MP30/manifest.py\n' \
             >> mp/ports/rp2/boards/PICO_MP30/mpconfigboard.cmake
+
+      - name: Herramientas ARM (compilador cruzado)
+        run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
 
       - name: Compilar
         run: |
