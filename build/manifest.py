@@ -1,29 +1,29 @@
-# manifest.py - esqueleto de congelado 3.0 (FASE B) - placa PICO_MP30
-# MicroPython importa estos modulos desde la flash: sin coste de heap
-# para su bytecode ni sus constantes (blob/tuplas viven en flash).
-#
-# Ubicacion final: dentro del directorio de la placa del build
-# (ver README_BUILD.txt). Los 4 ficheros device/*.py se copian al
-# mismo directorio que este manifest.py.
-#
-# 22/09: FIX CRITICO. Este manifest debe EMPEZAR incluyendo la
-# cadena por defecto del puerto rp2 (asi lo hace RPI_PICO_W en su
-# propio manifest). Sin ese include no se congelaba _boot.py, y
-# _boot.py es quien monta el filesystem interno al arrancar
-# (rp2.Flash() + VfsLfs2 + vfs.mount(fs, "/"); ademas necesita
-# rp2.py, tambien congelado por la cadena por defecto).
-# Sintoma visto en hardware: os.listdir() -> [] (raiz virtual
-# vacia, NO un disco formateado) y OSError: ENODEV al escribir
-# (Thonny no podia subir ficheros). Los ficheros del usuario
-# NUNCA se tocaron: no habia filesystem montado que danar.
+# manifest.py - congelado 3.0 - placa PICO_MP30
+# iter1 (21-22/09): 4 modulos 3.0-B. iter2 (22/09): + los 10
+# modulos de disco (regla del propietario, NOTA 22/09-II: los .py
+# que queden en disco pasan a .mpy; se ejecuta como congelado).
+# services.py lleva el hardening MODULOS_RESERVADOS (+7 nombres,
+# FICHA_ITER2 seccion 9).
+# include() primero: sin _boot.py no hay filesystem (fix critico
+# 22/09 de iter1; sintaxis y nota de nombres completos: ver
+# comentarios de iter1 y tools/manifestfile.py).
 
 include("$(PORT_DIR)/boards/manifest.py")
 
-# 21/09: en v1.29.0 freeze() exige el nombre COMPLETO del fichero
-# (con .py). Verificado en tools/manifestfile.py: _search usa el
-# nombre tal cual y _add_file hace os.stat sin anadir extension.
-
+# iter1
 freeze('.', 'fontbase3.py')
 freeze('.', 'fontnokia3.py')
 freeze('.', 'fontarcade3.py')
 freeze('.', 'writer3.py')
+
+# iter2
+freeze('.', 'buttons_pio.py')
+freeze('.', 'fonts.py')
+freeze('.', 'fpsmeter.py')
+freeze('.', 'gpu.py')
+freeze('.', 'log.py')
+freeze('.', 'screens.py')
+freeze('.', 'sd_browse.py')
+freeze('.', 'sdcard.py')
+freeze('.', 'services.py')
+freeze('.', 'st7567.py')
