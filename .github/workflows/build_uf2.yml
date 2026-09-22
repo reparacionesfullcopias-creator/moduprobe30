@@ -1,11 +1,9 @@
-# GitHub Actions — build del .uf2 3.0 con fuentes congeladas (FASE B)
+# GitHub Actions - build del .uf2 3.0 con fuentes congeladas
 # Colocar en el repo como: .github/workflows/build_uf2.yml
-# Version de MicroPython FIJADA con FU-B0 (sonda FUB, 21/09): v1.29.0.
-# 21/09: anadido paso de herramientas ARM (el runner de GitHub no trae
-# gcc-arm-none-eabi preinstalado, verificado en el readme de runner-images).
-# 21/09: adaptado a v1.29.0 real: placa renombrada PICO -> RPI_PICO,
-# manifest anclado con set() (sintaxis CMake oficial de esa version) y
-# submodules recursive (rp2 necesita lib/pico-sdk para compilar).
+# iter1 (21/09): version fijada v1.29.0, placa PICO_MP30, ARM tools,
+# submodules recursive, manifest anclado (ver comentarios historicos).
+# iter2 (22/09): copia 14 fuentes al directorio de la placa y el
+# artifact pasa a llamarse firmware-3.0-iter2.
 
 name: build-uf2-3.0
 
@@ -25,20 +23,20 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: micropython/micropython
-          ref: v1.29.0          # fijado con FU-B0 (MicroPython v1.29.0, 21/09)
+          ref: v1.29.0          # fijado con FU-B0 (iter1)
           path: mp
-          submodules: recursive # pico-sdk y compania: sin esto rp2 no compila
+          submodules: recursive # pico-sdk y compania
 
       - name: Preparar placa PICO_MP30 con fuentes congeladas
         run: |
           cp -r mp/ports/rp2/boards/RPI_PICO mp/ports/rp2/boards/PICO_MP30
-          cp device/fontbase3.py device/fontnokia3.py \
+          cp device/buttons_pio.py device/fonts.py device/fpsmeter.py \
+             device/gpu.py device/log.py device/screens.py \
+             device/sd_browse.py device/sdcard.py device/services.py \
+             device/st7567.py device/fontbase3.py device/fontnokia3.py \
              device/fontarcade3.py device/writer3.py \
              mp/ports/rp2/boards/PICO_MP30/
           cp build/manifest.py mp/ports/rp2/boards/PICO_MP30/manifest.py
-          # Anclar el manifest en la placa (linea anadida al final de
-          # PICO_MP30/mpconfigboard.cmake). Sintaxis CMake oficial de
-          # v1.29.0 (la usan RPI_PICO_W y otras placas con frozen propio):
           printf '\nset(MICROPY_FROZEN_MANIFEST ${MICROPY_BOARD_DIR}/manifest.py)\n' \
             >> mp/ports/rp2/boards/PICO_MP30/mpconfigboard.cmake
 
@@ -54,5 +52,5 @@ jobs:
       - name: Publicar artefacto
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-3.0-iter1
+          name: firmware-3.0-iter2
           path: mp/ports/rp2/build*/firmware.uf2
